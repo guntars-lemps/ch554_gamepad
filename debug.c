@@ -4,29 +4,28 @@
 * Version            : V1.0
 * Date               : 2017/01/20
 * Description        : CH554 DEBUG Interface
-                     CH554 main frequency modification, delay function definition
-                     Serial port 0 and serial port 1 initialization
-                     Serial port 0 and serial port 1 transceiver subfunctions
-                     Watchdog initialization
+
+CH554 main frequency modification, delay function definition
+Serial port 0 and serial port 1 initialization
+Serial port 0 and serial port 1 transceiver subfunctions
+Watchdog initialization
 *******************************************************************************/
 
 #include <stdint.h>
-
 #include "ch554.h"
 #include "debug.h"
+
 
 /*******************************************************************************
 * Function Name  : CfgFsys( )
 * Description  : CH554 clock selection and configuration function, Fsys 6MHz is used by default, FREQ_SYS can be passed
-                 CLOCK_CFG configuration, the formula is as follows:
-                 Fsys = (Fosc * 4 / (CLOCK_CFG & MASK_SYS_CK_SEL); the specific clock needs to be configured by yourself
+CLOCK_CFG configuration, the formula is as follows:
+Fsys = (Fosc * 4 / (CLOCK_CFG & MASK_SYS_CK_SEL); the specific clock needs to be configured by yourself
 *******************************************************************************/ 
-void    CfgFsys( )
+void CfgFsys( )
 {
     SAFE_MOD = 0x55;
     SAFE_MOD = 0xAA;
-//     CLOCK_CFG |= bOSC_EN_XT;                          // Enable external crystal
-//     CLOCK_CFG & = ~ bOSC_EN_INT;                      // Turn off the internal crystal
 
 #if FREQ_SYS == 32000000
     CLOCK_CFG = CLOCK_CFG & ~ MASK_SYS_CK_SEL | 0x07;  // 32MHz
@@ -60,7 +59,7 @@ void    CfgFsys( )
 * Output         : None
 * Return         : None
 *******************************************************************************/ 
-void    mDelayuS( uint16_t n )  // Delay in uS
+void mDelayuS(uint16_t n)  // Delay in uS
 {
 #ifdef    FREQ_SYS
 #if        FREQ_SYS <= 6000000
@@ -73,43 +72,44 @@ void    mDelayuS( uint16_t n )  // Delay in uS
         n >>= 4;
 #endif
 #endif
-    while ( n ) {  // total = 12~13 Fsys cycles, 1uS @Fsys=12MHz
-        ++ SAFE_MOD;  // 2 Fsys cycles, for higher Fsys, add operation here
+    while (n) {  // total = 12~13 Fsys cycles, 1uS @Fsys=12MHz
+        ++SAFE_MOD;  // 2 Fsys cycles, for higher Fsys, add operation here
 #ifdef    FREQ_SYS
 #if        FREQ_SYS >= 14000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 16000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 18000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 20000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 22000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 24000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 26000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 28000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 30000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #if        FREQ_SYS >= 32000000
-        ++ SAFE_MOD;
+        ++SAFE_MOD;
 #endif
 #endif
-        -- n;
+        --n;
     }
 }
+
 
 /*******************************************************************************
 * Function Name  : mDelayms(UNIT16 n)
@@ -118,20 +118,22 @@ void    mDelayuS( uint16_t n )  // Delay in uS
 * Output         : None
 * Return         : None
 *******************************************************************************/
-void    mDelaymS( uint16_t n )                                                  // Delay in mS
+void mDelaymS( uint16_t n )                                                  // Delay in mS
 {
-    while ( n ) {
+    while (n) {
 #ifdef    DELAY_MS_HW
-        while ( ( TKEY_CTRL & bTKC_IF ) == 0 );
-        while ( TKEY_CTRL & bTKC_IF );
+        while ((TKEY_CTRL & bTKC_IF) == 0);
+        while (TKEY_CTRL & bTKC_IF);
 #else
-        mDelayuS( 1000 );
+        mDelayuS(1000);
 #endif
-        -- n;
+        --n;
     }
 }                                         
 
+
 #if SDCC < 370
+
 void putchar(char c)
 {
     while (!TI); /* assumes UART is initialized */
@@ -139,12 +141,16 @@ void putchar(char c)
     SBUF = c;
 }
 
-char getchar() {
-    while(!RI); /* assumes UART is initialized */
+
+char getchar()
+{
+    while (!RI); /* assumes UART is initialized */
     RI = 0;
     return SBUF;
 }
+
 #else
+
 int putchar(int c)
 {
     while (!TI); /* assumes UART is initialized */
@@ -154,9 +160,11 @@ int putchar(int c)
     return c;
 }
 
+
 int getchar() {
-    while(!RI); /* assumes UART is initialized */
+    while (!RI); /* assumes UART is initialized */
     RI = 0;
     return SBUF;
 }
+
 #endif

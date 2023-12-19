@@ -7,18 +7,19 @@
 #include <stdint.h>
 #include "ch554.h"
 
-#ifndef  UART0_BAUD
-#define  UART0_BAUD    9600
+#ifndef UART0_BAUD
+#define UART0_BAUD    9600
 #endif
 
 #ifndef UART1_BAUD
-#define  UART1_BAUD    9600
+#define UART1_BAUD    9600
 #endif
 
-void    CfgFsys( );                       // CH554 clock selection and configuration
+void CfgFsys();             // CH554 clock selection and configuration
 
-void mDelayuS (uint16_t n); // Delay in units of uS
-void mDelaymS (uint16_t n); // Delay in mS
+void mDelayuS(uint16_t n); // Delay in units of uS
+void mDelaymS(uint16_t n); // Delay in mS
+
 
 /*******************************************************************************
 * Function Name  : CH554UART0Alter()
@@ -27,50 +28,56 @@ void mDelaymS (uint16_t n); // Delay in mS
 *******************************************************************************/
 inline void CH554UART0Alter()
 {
-    PIN_FUNC |= bUART0_PIN_X;           //串口映射到P1.2和P1.3
+    PIN_FUNC |= bUART0_PIN_X;           // The serial port is mapped to P1.2 and P1.3
 }
+
 
 /*******************************************************************************
 * Function Name  : mInitSTDIO()
 * Description    : CH554 serial port 0 is initialized, T1 is used as the baud rate generator of UART0 by default, T2 can also be used
-                   As a baud rate generator
+                   As a baud rate generator
 *******************************************************************************/
-inline void    mInitSTDIO( )
+inline void mInitSTDIO()
 {
     uint32_t x;
     uint8_t x2;
 
     SM0 = 0;
     SM1 = 1;
-    SM2 = 0;                                                                   //Serial port 0 usage mode 1
-                                                                               //Use Timer1 as a baud rate generator
-    RCLK = 0;                                                                  //UART0 receive clock
-    TCLK = 0;                                                                  //UART0 transmit clock
+    SM2 = 0;                              // Serial port 0 usage mode 1
+                                          // Use Timer1 as a baud rate generator
+    RCLK = 0;                             // UART0 receive clock
+    TCLK = 0;                             // UART0 transmit clock
     PCON |= SMOD;
-    x = 10 * FREQ_SYS / UART0_BAUD / 16;                                       //If you change the main frequency, be careful not to overflow the value of x
+    x = 10 * FREQ_SYS / UART0_BAUD / 16;  // If you change the main frequency, be careful not to overflow the value of x
     x2 = x % 10;
     x /= 10;
-    if ( x2 >= 5 ) x ++;                                                       //rounding
 
-    TMOD = TMOD & ~ bT1_GATE & ~ bT1_CT & ~ MASK_T1_MOD | bT1_M1;              //0X20, Timer1 as 8-bit auto-reload timer
-    T2MOD = T2MOD | bTMR_CLK | bT1_CLK;                                        //Timer1 clock selection
-    TH1 = 0-x;                                                                 //12MHz crystal oscillator, buad / 12 is the actual need to set the baud rate
-    TR1 = 1;                                                                   //Start timer 1
+    if (x2 >= 5) { // rounding
+        x ++;
+    }
+
+    TMOD = TMOD & ~ bT1_GATE & ~ bT1_CT & ~ MASK_T1_MOD | bT1_M1; // 0x20, Timer1 as 8-bit auto-reload timer
+    T2MOD = T2MOD | bTMR_CLK | bT1_CLK;                           // Timer1 clock selection
+    TH1 = 0 - x;                                                  // 12MHz crystal oscillator, buad / 12 is the actual need to set the baud rate
+    TR1 = 1;                                                      // Start timer 1
     TI = 1;
-    REN = 1;                                                                   //Serial 0 receive enable
+    REN = 1;                                                      // Serial 0 receive enable
 }
+
 
 /*******************************************************************************
 * Function Name  : CH554UART0RcvByte()
 * Description    : CH554UART0 receives a byte
 * Return         : SBUF
 *******************************************************************************/
-inline uint8_t  CH554UART0RcvByte( )
+inline uint8_t CH554UART0RcvByte()
 {
-    while(RI == 0);                     // wait for uart rx interrupt flag
+    while (RI == 0); // wait for uart rx interrupt flag
     RI = 0;
     return SBUF;
 }
+
 
 /*******************************************************************************
 * Function Name  : CH554UART0SendByte(uint8_t SendDat)
@@ -79,11 +86,11 @@ inline uint8_t  CH554UART0RcvByte( )
 *******************************************************************************/
 inline void CH554UART0SendByte(uint8_t SendDat)
 {
-
-        SBUF = SendDat;
-        while(TI ==0);                  // wait for transmit to finish (TI == 1)
-        TI = 0;
+    SBUF = SendDat;
+    while (TI == 0); // wait for transmit to finish (TI == 1)
+    TI = 0;
 }
+
 
 /*******************************************************************************
 * Function Name  : CH554UART1Alter()
@@ -94,30 +101,33 @@ inline void CH554UART1Alter()
     PIN_FUNC |= bUART1_PIN_X;
 }
 
+
 /*******************************************************************************
 * Function Name  : UART1Setup()
-* Description    : CH554串口1初始化
+* Description    : CH554 Serial port 1 initialization
 *******************************************************************************/
-inline void    UART1Setup()
+inline void UART1Setup()
 {
-    U1SM0 = 0;                          //UART1选择8位数据位
-    U1SMOD = 1;                         //快速模式
-    U1REN = 1;                          //使能接收
+    U1SM0 = 0;  // UART1 selects 8 data bits
+    U1SMOD = 1; // Quick mode
+    U1REN = 1;  // enable reception
     // should correct for rounding in SBAUD1 calculation 
     SBAUD1 = 256 - FREQ_SYS/16/UART1_BAUD;
 }
 
+
 /*******************************************************************************
 * Function Name  : CH554UART1RcvByte()
-* Description    : CH554UART1接收一个字节
+* Description    : CH554UART1 receive a byte
 * Return         : SBUF
 *******************************************************************************/
-inline uint8_t  CH554UART1RcvByte( )
+inline uint8_t CH554UART1RcvByte()
 {
-    while(U1RI == 0);                   //查询接收，中断方式可不用
+    while (U1RI == 0); // Query reception, interrupt mode is not required
     U1RI = 0;
     return SBUF1;
 }
+
 
 /*******************************************************************************
 * Function Name  : CH554UART1SendByte(uint8_t SendDat)
@@ -126,18 +136,17 @@ inline uint8_t  CH554UART1RcvByte( )
 *******************************************************************************/
 inline void CH554UART1SendByte(uint8_t SendDat)
 {
-        SBUF1 = SendDat;                //查询发送，中断方式可不用下面2条语句,但发送前需TI=0
-        while(U1TI ==0);
-        U1TI = 0;
+    SBUF1 = SendDat;                // Query is sent, the interrupt method does not require the following two statements,
+                                    // but TI=0 is required before sending.
+    while (U1TI == 0);
+    U1TI = 0;
 }
 
-#if SDCC < 370
-void putchar(char c);
-char getchar();
-#else
+
 int putchar(int c);
+
 int getchar(void);
-#endif
+
 
 /*******************************************************************************
 * Function Name  : CH554WDTModeSelect(uint8_t mode)
@@ -150,17 +159,19 @@ int getchar(void);
 *******************************************************************************/
 inline void CH554WDTModeSelect(uint8_t mode)
 {
-   SAFE_MOD = 0x55;
-   SAFE_MOD = 0xaa;                                                             //Enter Safe Mode
-   if(mode){
-     GLOBAL_CFG |= bWDOG_EN;                                                    //Start watchdog reset
+    SAFE_MOD = 0x55;
+    SAFE_MOD = 0xaa; // Enter Safe Mode
+    if (mode) {
+        GLOBAL_CFG |= bWDOG_EN; // Start watchdog reset
+    }
+
+   else {
+      GLOBAL_CFG &= ~bWDOG_EN; //Start watchdog only as a timer
    }
-
-   else GLOBAL_CFG &= ~bWDOG_EN;                                                //Start watchdog only as a timer
-   SAFE_MOD = 0x00;                                                             //exit safe Mode
-   WDOG_COUNT = 0;                                                              //Watchdog assignment initial value
-
+   SAFE_MOD = 0; // exit safe Mode
+   WDOG_COUNT = 0; // Watchdog assignment initial value
 }
+
 
 /*******************************************************************************
 * Function Name  : CH554WDTFeed(uint8_t tim)
@@ -174,7 +185,5 @@ inline void CH554WDTModeSelect(uint8_t mode)
 *******************************************************************************/
 inline void CH554WDTFeed(uint8_t tim)
 {
-
-   WDOG_COUNT = tim;                                                            // Watchdog counter assignment
-
+   WDOG_COUNT = tim; // Watchdog counter assignment
 }

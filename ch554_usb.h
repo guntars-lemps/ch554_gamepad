@@ -159,7 +159,7 @@ Header file for CH554 microcontrollers.
 #endif
 
 #ifndef USB_DEVICE_ADDR
-#define    USB_DEVICE_ADDR            0x02    /* 默认的USB设备地址 */
+#define    USB_DEVICE_ADDR            0x02
 #endif
 #ifndef DEFAULT_ENDP0_SIZE
 #define DEFAULT_ENDP0_SIZE      8       /* default maximum packet size for endpoint 0 */
@@ -171,15 +171,15 @@ Header file for CH554 microcontrollers.
 #define MAX_PACKET_SIZE         64      /* maximum packet size */
 #endif
 #ifndef USB_BO_CBW_SIZE
-#define USB_BO_CBW_SIZE            0x1F    /* 命令块CBW的总长度 */
-#define USB_BO_CSW_SIZE            0x0D    /* 命令状态块CSW的总长度 */
+#define USB_BO_CBW_SIZE            0x1F
+#define USB_BO_CSW_SIZE            0x0D
 #endif
 #ifndef USB_BO_CBW_SIG0
-#define USB_BO_CBW_SIG0         0x55    /* 命令块CBW识别标志'USBC' */
+#define USB_BO_CBW_SIG0         0x55    /* 'USBC' */
 #define USB_BO_CBW_SIG1         0x53
 #define USB_BO_CBW_SIG2         0x42
 #define USB_BO_CBW_SIG3         0x43
-#define USB_BO_CSW_SIG0         0x55    /* 命令状态块CSW识别标志'USBS' */
+#define USB_BO_CSW_SIG0         0x55    /* 'USBS' */
 #define USB_BO_CSW_SIG1         0x53
 #define USB_BO_CSW_SIG2         0x42
 #define USB_BO_CSW_SIG3         0x53

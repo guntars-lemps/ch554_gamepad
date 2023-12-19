@@ -488,7 +488,7 @@ SFR(TKEY_CTRL,    0xC3);    // touch-key control
 //   101: TIN4(P1.6)
 //   110: TIN5(P1.7)
 //   111: enable touch-key but disable all channel
-SFR16(TKEY_DAT,    0C4);    // ReadOnly: touch-key data, little-endian
+SFR16(TKEY_DAT,   0xC4);    // ReadOnly: touch-key data, little-endian
 SFR(TKEY_DATL,    0xC4);    // ReadOnly: low byte of touch-key data
 SFR(TKEY_DATH,    0xC5);    // ReadOnly: high byte of touch-key data
 #define bTKD_CHG          0x80      // ReadOnly: indicate control changed, current data maybe invalid
