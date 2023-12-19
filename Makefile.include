@@ -1,0 +1,69 @@
+#######################################################
+
+# toolchain
+CC = sdcc
+OBJCOPY = objcopy
+PACK_HEX = packihx
+WCHISP ?= wchisptool -g -f
+
+#######################################################
+
+FREQ_SYS ?= 24000000
+
+XRAM_SIZE ?= 0x0400
+
+XRAM_LOC ?= 0x0000
+
+CODE_SIZE ?= 0x4000
+
+ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+OBJDIR = ./build
+
+
+OBJECTS = \
+$(OBJDIR)/debug.rel \
+$(OBJDIR)/usb_gamepad.rel \
+$(OBJDIR)/usb_host.rel
+
+
+CFLAGS := -V -mmcs51 --model-small --stack-auto \
+	--xram-size $(XRAM_SIZE) --xram-loc $(XRAM_LOC) \
+	--code-size $(CODE_SIZE) \
+	-I/ -DFREQ_SYS=$(FREQ_SYS) \
+	$(EXTRA_FLAGS)
+
+LFLAGS := $(CFLAGS)
+
+RELS := $(C_FILES:.c=.rel)
+
+print-%  : ; @echo $* = $($*)
+
+
+$(OBJDIR)/%.rel : %.c
+	$(CC) -c $(CFLAGS) -o $@ $<
+
+$(OBJDIR)/$(TARGET).ihx: $(OBJECTS)
+	$(CC) $(OBJECTS) $(LFLAGS) -o $(OBJDIR)/$(TARGET).ihx
+
+$(OBJDIR)/$(TARGET).hex: $(OBJDIR)/$(TARGET).ihx
+	$(PACK_HEX) $(OBJDIR)/$(TARGET).ihx > $(OBJDIR)/$(TARGET).hex
+
+$(OBJDIR)/$(TARGET).bin: $(OBJDIR)/$(TARGET).ihx
+	$(OBJCOPY) -I ihex -O binary $(OBJDIR)/$(TARGET).ihx $(OBJDIR)/$(TARGET).bin
+
+
+flash: $(OBJDIR)/$(TARGET).bin
+	$(WCHISP) -f $(OBJDIR)/$(TARGET).bin -g
+
+.DEFAULT_GOAL := all
+
+directories:
+	@mkdir -p $(OBJDIR)
+
+all:  directories $(OBJDIR)/$(TARGET).bin $(OBJDIR)/$(TARGET).hex
+
+
+clean:
+	rm -f $(OBJDIR)/*
+
