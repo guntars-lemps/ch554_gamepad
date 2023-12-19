@@ -1,2 +1,2 @@
-# ch554_gamepad
+# (WIP) ch554_gamepad
 USB Gamepad to gpio module based on CH554
