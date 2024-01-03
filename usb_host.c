@@ -59,10 +59,11 @@ uint8_t AnalyzeRootHub(void)
 {
     if (USB_MIS_ST & bUMS_DEV_ATTACH) {                                        // Device exists
 #ifdef DISK_BASE_BUF_LEN
-        if ((CH554DiskStatus == DISK_DISCONNECT) || ((UHOST_CTRL & bUH_PORT_EN) == 0)) {
+        if ((CH554DiskStatus == DISK_DISCONNECT) || ((UHOST_CTRL & bUH_PORT_EN) == 0))
 #else
-        if ((ThisUsbDev.DeviceStatus == ROOT_DEV_DISCONNECT) || ((UHOST_CTRL & bUH_PORT_EN) == 0)) { // Device detected plugged in
+        if ((ThisUsbDev.DeviceStatus == ROOT_DEV_DISCONNECT) || ((UHOST_CTRL & bUH_PORT_EN) == 0)) // Device detected plugged in
 #endif
+        {
             // It is detected that a device is plugged in, but it has not been allowed yet, indicating that it has just been plugged in.
             DisableRootHubPort();                                                   // close port
 #ifdef DISK_BASE_BUF_LEN
@@ -77,10 +78,11 @@ uint8_t AnalyzeRootHub(void)
         }
     }
 #ifdef DISK_BASE_BUF_LEN
-    else if (CH554DiskStatus >= DISK_CONNECT) {
+    else if (CH554DiskStatus >= DISK_CONNECT)
 #else
-    else if (ThisUsbDev.DeviceStatus >= ROOT_DEV_CONNECTED) {                 // Device unplug detected
+    else if (ThisUsbDev.DeviceStatus >= ROOT_DEV_CONNECTED)                 // Device unplug detected
 #endif
+    {
         DisableRootHubPort();                                                     // close port
 #if DE_PRINTF
         printf("USB dev out\n");
@@ -135,13 +137,13 @@ void SetUsbSpeed(uint8_t FullSpeed)
 *******************************************************************************/
 void ResetRootHubPort()
 {
-    UsbDevEndp0Size = DEFAULT_ENDP0_SIZE;                                      // Maximum packet size for USB device endpoint 0
+    UsbDevEndp0Size = DEFAULT_ENDP0_SIZE;                      // Maximum packet size for USB device endpoint 0
 #ifndef DISK_BASE_BUF_LEN
-    memset(&ThisUsbDev, 0, sizeof(ThisUsbDev));                                // Clear the structure
+    memset(&ThisUsbDev, 0, sizeof(ThisUsbDev));                // Clear the structure
 #endif
     SetHostUsbAddr(0x00);
     UHOST_CTRL &= ~bUH_PORT_EN;                                // close port
-    SetUsbSpeed(1);                                          // Default is full speed
+    SetUsbSpeed(1);                                            // Default is full speed
     UHOST_CTRL = UHOST_CTRL & ~ bUH_LOW_SPEED | bUH_BUS_RESET; // Default is full speed, start reset
     mDelaymS(20);                                              // Reset time 10mS to 20mS
     UHOST_CTRL = UHOST_CTRL & ~ bUH_BUS_RESET;                 // End reset
@@ -158,7 +160,7 @@ void ResetRootHubPort()
 * Output         : None
 * Return         : Return ERR_SUCCESS if a new connection is detected, and return ERR_USB_DISCON if there is no connection.
 *******************************************************************************/
-uint8_t   EnableRootHubPort( )
+uint8_t EnableRootHubPort()
 {
 #ifdef DISK_BASE_BUF_LEN
     if (CH554DiskStatus < DISK_CONNECT) {
@@ -197,18 +199,18 @@ uint8_t   EnableRootHubPort( )
 *******************************************************************************/
 void SelectHubPort(uint8_t HubPortIndex)
 {
-    if (HubPortIndex) {                                                         // 选择操作指定的ROOT-HUB端口的外部HUB的指定端口
-        SetHostUsbAddr(DevOnHubPort[HubPortIndex-1].DeviceAddress);          // 设置USB主机当前操作的USB设备地址
-        SetUsbSpeed(DevOnHubPort[HubPortIndex-1].DeviceSpeed);               // 设置当前USB速度
-        if (DevOnHubPort[HubPortIndex-1].DeviceSpeed == 0) {                   // 通过外部HUB与低速USB设备通讯需要前置ID
-            UH_SETUP |= bUH_PRE_PID_EN;                                        // 启用PRE PID
+    if (HubPortIndex) { // Select the specified port of the external HUB of the ROOT-HUB port specified by the operation
+        SetHostUsbAddr(DevOnHubPort[HubPortIndex-1].DeviceAddress); // Set the USB device address currently operated by the USB host
+        SetUsbSpeed(DevOnHubPort[HubPortIndex-1].DeviceSpeed); // Set the current USB speed
+        if (DevOnHubPort[HubPortIndex-1].DeviceSpeed == 0) { // Communication with low-speed USB devices through an external HUB requires a prefix ID
+            UH_SETUP |= bUH_PRE_PID_EN; // Enable PRE PID
             HubLowSpeed = 1;
             mDelayuS(100);
         }
     } else {
         HubLowSpeed = 0;
-        SetHostUsbAddr(ThisUsbDev.DeviceAddress);                            // 设置USB主机当前操作的USB设备地址
-        SetUsbSpeed(ThisUsbDev.DeviceSpeed);                                 // 设置USB设备的速度
+        SetHostUsbAddr(ThisUsbDev.DeviceAddress); // Set the USB device address currently operated by the USB host
+        SetUsbSpeed(ThisUsbDev.DeviceSpeed); // Set the speed of the USB device
     }
 }
 #endif
@@ -219,8 +221,8 @@ void SelectHubPort(uint8_t HubPortIndex)
 * Description    : 等待USB中断
 * Input          : None
 * Output         : None
-* Return         : 返回ERR_SUCCESS 数据接收或者发送成功
-                   ERR_USB_UNKNOWN 数据接收或者发送失败
+* Return         : ERR_SUCCESS data received or sent successfully
+                   ERR_USB_UNKNOWN Data reception or transmission failed
 *******************************************************************************/
 uint8_t WaitUSB_Interrupt(void)
 {
@@ -232,61 +234,63 @@ uint8_t WaitUSB_Interrupt(void)
 
 /*******************************************************************************
 * Function Name  : USBHostTransact
-* Description    : CH554传输事务,输入目的端点地址/PID令牌,同步标志,以20uS为单位的NAK重试总时间(0则不重试,0xFFFF无限重试),返回0成功,超时/出错重试
-                   本子程序着重于易理解,而在实际应用中,为了提供运行速度,应该对本子程序代码进行优化
-* Input          : uint8_t endp_pid 令牌和地址  endp_pid: 高4位是token_pid令牌, 低4位是端点地址
-                   uint8_t tog      同步标志
-                   uint16_t timeout 超时时间
+* Description    : CH554 transmission transaction, input destination endpoint address/PID token, synchronization flag,
+*                  total NAK retry time in 20uS units (0 means no retry, 0xFFFF infinite retry), return 0 for success, timeout/error retry
+                   This subroutine focuses on being easy to understand.
+                   In practical applications, in order to provide running speed, the code of this subroutine should be optimized.
+* Input          : uint8_t endp_pid token and address endp_pid: the high 4 bits are the token_pid token, the low 4 bits are the endpoint address
+                   uint8_t tog synchronization flag
+                   uint16_t timeout timeout time
 * Output         : None
-* Return         : ERR_USB_UNKNOWN 超时，可能硬件异常
-                   ERR_USB_DISCON  设备断开
-                   ERR_USB_CONNECT 设备连接
-                   ERR_SUCCESS     传输完成
+* Return         : ERR_USB_UNKNOWN timed out, possibly hardware abnormality
+                   ERR_USB_DISCON device disconnected
+                   ERR_USB_CONNECT device connection
+                   ERR_SUCCESS Transfer completed
 *******************************************************************************/
 uint8_t USBHostTransact(uint8_t endp_pid, uint8_t tog, uint16_t timeout)
 {
-#define    TransRetry    UEP0_T_LEN                                                   // 节约内存
-    uint8_t   s, r;
-    uint16_t  i;
+#define TransRetry UEP0_T_LEN // Save memory
+    uint8_t s, r;
+    uint16_t i;
     UH_RX_CTRL = UH_TX_CTRL = tog;
     TransRetry = 0;
 
     do {
-        UH_EP_PID = endp_pid;                                                      // 指定令牌PID和目的端点号
-        UIF_TRANSFER = 0;                                                          // 允许传输
+        UH_EP_PID = endp_pid; // Specify token PID and destination endpoint number
+        UIF_TRANSFER = 0; // Allow transmission
         for (i = WAIT_USB_TOUT_200US; i != 0 && UIF_TRANSFER == 0; i --);
-        UH_EP_PID = 0x00;                                                          // 停止USB传输
+        UH_EP_PID = 0x00; // Stop USB transfer
         if (UIF_TRANSFER == 0) {
             return (ERR_USB_UNKNOWN);
         }
-        if (UIF_DETECT) {                                                        // USB设备插拔事件
-            UIF_DETECT = 0;                                                          // 清中断标志
-            s = AnalyzeRootHub();                                                   // 分析ROOT-HUB状态
+        if (UIF_DETECT) { // USB device plug and unplug event
+            UIF_DETECT = 0; // Clear interrupt flag
+            s = AnalyzeRootHub(); // Analyze ROOT-HUB status
             if (s == ERR_USB_CONNECT) {
                 FoundNewDev = 1;
             }
 #ifdef DISK_BASE_BUF_LEN
             if (CH554DiskStatus == DISK_DISCONNECT) {
-                return (ERR_USB_DISCON);      // USB设备断开事件
+                return (ERR_USB_DISCON); // USB device disconnect event
             }
             if (CH554DiskStatus == DISK_CONNECT) {
-                return (ERR_USB_CONNECT);        // USB设备连接事件
+                return (ERR_USB_CONNECT); // USB device connection event
             }
 #else
             if (ThisUsbDev.DeviceStatus == ROOT_DEV_DISCONNECT) {
-                return (ERR_USB_DISCON); // USB设备断开事件
+                return (ERR_USB_DISCON); // USB device disconnect event
             }
             if (ThisUsbDev.DeviceStatus == ROOT_DEV_CONNECTED) {
-                return (ERR_USB_CONNECT); // USB设备连接事件
+                return (ERR_USB_CONNECT); // USB device connection event
             }
 #endif
-            mDelayuS (200);  // 等待传输完成
+            mDelayuS(200); // Wait for transfer to complete
         }
-        if (UIF_TRANSFER) {  // 传输完成
+        if (UIF_TRANSFER) { // Transmission completed
             if (U_TOG_OK) {
                 return (ERR_SUCCESS);
             }
-            r = USB_INT_ST & MASK_UIS_H_RES;  // USB设备应答状态
+            r = USB_INT_ST & MASK_UIS_H_RES; // USB device response status
             if (r == USB_PID_STALL) {
                 return (r | ERR_USB_TRANSFER);
             }
@@ -303,92 +307,92 @@ uint8_t USBHostTransact(uint8_t endp_pid, uint8_t tog, uint16_t timeout)
                     case USB_PID_SETUP:
                     case USB_PID_OUT:
                         if (r) {
-                            return (r | ERR_USB_TRANSFER);  // 不是超时/出错,意外应答
+                            return (r | ERR_USB_TRANSFER); // Not a timeout/error, unexpected response
                         }
-                        break;  // 超时重试
+                        break; // Retry after timeout
                     case USB_PID_IN:
-                        if ((r == USB_PID_DATA0) && (r == USB_PID_DATA1)) {  // 不同步则需丢弃后重试
-                            // 不同步重试
-                        }  else if (r) {
-                            return (r | ERR_USB_TRANSFER);  // 不是超时/出错,意外应答
+                        if ((r == USB_PID_DATA0) && (r == USB_PID_DATA1)) { // If not synchronized, discard and try again
+                            // Retry without synchronization
+                        } else if (r) {
+                            return (r | ERR_USB_TRANSFER); // Not a timeout/error, unexpected response
                         }
-                        break;  // 超时重试
+                        break; // Retry after timeout
                     default:
-                        return (ERR_USB_UNKNOWN);  // 不可能的情况
-                        break;
+                       return (ERR_USB_UNKNOWN); // Impossible situation
+                       break;
                 }
             }
-        } else { // 其它中断,不应该发生的情况
-            USB_INT_FG = 0xFF;  /* 清中断标志 */
+        } else { // Other interrupts, situations that should not occur
+            USB_INT_FG = 0xFF; /* Clear interrupt flag */
         }
         mDelayuS(15);
     } while (++TransRetry < 3);
-    return (ERR_USB_TRANSFER);  // 应答超时
+    return (ERR_USB_TRANSFER); // Response timeout
 }
 
 
 /*******************************************************************************
 * Function Name  : HostCtrlTransfer
-* Description    : 执行控制传输,8字节请求码在pSetupReq中,DataBuf为可选的收发缓冲区
-* Input          : P__xdata uint8_t DataBuf 如果需要接收和发送数据,那么DataBuf需指向有效缓冲区用于存放后续数据
-                   Puint8_t RetLen  实际成功收发的总长度保存在RetLen指向的字节变量中
+* Description    : Execute control transmission, the 8-byte request code is in pSetupReq, and DataBuf is an optional transceiver buffer.
+* Input          : P__xdata uint8_t DataBuf If you need to receive and send data, then DataBuf needs to point to a valid buffer to store subsequent data.
+                   Puint8_t RetLen  The total length of actual successful transmission and reception is stored in the byte variable pointed to by RetLen
 * Output         : None
-* Return         : ERR_USB_BUF_OVER IN状态阶段出错
-                   ERR_SUCCESS     数据交换成功
-                   其他错误状态
+* Return         : ERR_USB_BUF_OVER IN status phase error
+                   ERR_SUCCESS Data exchange successful
+                   Other error status
 *******************************************************************************/
 uint8_t HostCtrlTransfer(__xdata uint8_t *DataBuf, uint8_t *RetLen)
 {
-    uint16_t  RemLen  = 0;
-    uint8_t   s, RxLen, RxCnt, TxCnt;
-    __xdata uint8_t  *pBuf;
-    uint8_t  *pLen;
+    uint16_t RemLen = 0;
+    uint8_t s, RxLen, RxCnt, TxCnt;
+    __xdata uint8_t *pBuf;
+    uint8_t *pLen;
     pBuf = DataBuf;
     pLen = RetLen;
     mDelayuS(200);
     if (pLen) {
-        *pLen = 0;                                                              // 实际成功收发的总长度
+        *pLen = 0; // The total length of actual successful transmission and reception
     }
     UH_TX_LEN = sizeof(USB_SETUP_REQ);
-    s = USBHostTransact((uint8_t)(USB_PID_SETUP << 4 | 0x00), 0x00, 10000);          // SETUP阶段,200mS超时
+    s = USBHostTransact((uint8_t)(USB_PID_SETUP << 4 | 0x00), 0x00, 10000); // SETUP phase, 200mS timeout
     if (s != ERR_SUCCESS) {
-        return (s);
+        return(s);
     }
-    UH_RX_CTRL = UH_TX_CTRL = bUH_R_TOG | bUH_R_AUTO_TOG | bUH_T_TOG | bUH_T_AUTO_TOG; // 默认DATA1
-    UH_TX_LEN = 0x01;                                                           // 默认无数据故状态阶段为IN
+    UH_RX_CTRL = UH_TX_CTRL = bUH_R_TOG | bUH_R_AUTO_TOG | bUH_T_TOG | bUH_T_AUTO_TOG; // Default DATA1
+    UH_TX_LEN = 0x01; // There is no data by default, so the status stage is IN
     RemLen = (pSetupReq -> wLengthH << 8) | (pSetupReq -> wLengthL);
-    if (RemLen && pBuf) {                                                       // 需要收发数据
-        if (pSetupReq -> bRequestType & USB_REQ_TYP_IN) {                       // 收
+    if (RemLen && pBuf) { // Need to send and receive data
+        if (pSetupReq -> bRequestType & USB_REQ_TYP_IN) { // Receive
             while (RemLen) {
                 mDelayuS(200);
-                s = USBHostTransact((uint8_t)(USB_PID_IN << 4 | 0x00), UH_RX_CTRL, (200000 / 20)); // IN数据
+                s = USBHostTransact((uint8_t)(USB_PID_IN << 4 | 0x00), UH_RX_CTRL, (200000 / 20)); // IN data
                 if (s != ERR_SUCCESS) {
-                    return (s);
+                    return(s);
                 }
                 RxLen = USB_RX_LEN < RemLen ? USB_RX_LEN : RemLen;
                 RemLen -= RxLen;
                 if (pLen) {
-                    *pLen += RxLen;                                              // 实际成功收发的总长度
+                    *pLen += RxLen; // The total length of actual successful transmission and reception
                 }
                 for (RxCnt = 0; RxCnt != RxLen; RxCnt ++) {
-                    *pBuf = RxBuffer[ RxCnt ];
-                    pBuf ++;
+                    *pBuf = RxBuffer[RxCnt];
+                    pBuf++;
                 }
                 if ((USB_RX_LEN == 0) || (USB_RX_LEN & (UsbDevEndp0Size - 1))) {
-                    break;                                                       // 短包
+                    break; // short packet
                 }
             }
-            UH_TX_LEN = 0x00;                                                    // 状态阶段为OUT
-        } else {                                                                   // 发
+            UH_TX_LEN = 0x00; //The status stage is OUT
+        } else { // Send
             while (RemLen) {
-                mDelayuS( 200 );
+                mDelayuS(200);
                 UH_TX_LEN = (RemLen >= UsbDevEndp0Size) ? UsbDevEndp0Size : RemLen;
 #ifndef DISK_BASE_BUF_LEN
-                if (pBuf[1] == 0x09) {                                             // HID类命令处理
+                if (pBuf[1] == 0x09) { // HID class command processing
                     Set_Port = Set_Port^1;
                     *pBuf = Set_Port;
 #if DE_PRINTF
-                    printf ("SET_PORT  %02X  %02X ", (uint16_t)(*pBuf), (uint16_t)(Set_Port));
+                    printf ("SET_PORT %02X %02X ", (uint16_t)(*pBuf), (uint16_t)(Set_Port));
 #endif
                 }
 #endif
@@ -396,79 +400,81 @@ uint8_t HostCtrlTransfer(__xdata uint8_t *DataBuf, uint8_t *RetLen)
                     TxBuffer[TxCnt] = *pBuf;
                     pBuf++;
                 }
-                s = USBHostTransact(USB_PID_OUT << 4 | 0x00, UH_TX_CTRL, (200000 / 20)); // OUT数据
+                s = USBHostTransact(USB_PID_OUT << 4 | 0x00, UH_TX_CTRL, (200000 / 20)); // OUT data
                 if (s != ERR_SUCCESS) {
-                    return (s);
+                    return(s);
                 }
                 RemLen -= UH_TX_LEN;
                 if (pLen) {
-                    *pLen += UH_TX_LEN;                                           // 实际成功收发的总长度
+                    *pLen += UH_TX_LEN; // The total length of actual successful transmission and reception
                 }
             }
         }
     }
     mDelayuS(200);
-    s = USBHostTransact((UH_TX_LEN ? (USB_PID_IN << 4 | 0x00): (USB_PID_OUT << 4 | 0x00)), (bUH_R_TOG | bUH_T_TOG), (200000 / 20)); // STATUS阶段
+    s = USBHostTransact((UH_TX_LEN ? (USB_PID_IN << 4 | 0x00): (USB_PID_OUT << 4 | 0x00)), (bUH_R_TOG | bUH_T_TOG), (200000 / 20)); // STATUS stage
     if (s != ERR_SUCCESS) {
-        return (s);
+        return(s);
     }
     if (UH_TX_LEN == 0) {
-        return (ERR_SUCCESS); // 状态OUT
+        return (ERR_SUCCESS); // status OUT
     }
     if (USB_RX_LEN == 0) {
-        return (ERR_SUCCESS); // 状态IN,检查IN状态返回数据长度
+        return (ERR_SUCCESS); // Status IN, check the IN status and return data length
     }
-    return (ERR_USB_BUF_OVER); // IN状态阶段错误
+    return (ERR_USB_BUF_OVER); // IN status phase error
 }
 
 
 /*******************************************************************************
 * Function Name  : CopySetupReqPkg
-* Description    : 复制控制传输的请求包
-* Input          : P__code uint8_t pReqPkt 控制请求包地址
+* Description    : Copy control transfer request packet
+* Input          : P__code uint8_t pReqPkt Control request packet address
 * Output         : None
 * Return         : None
 *******************************************************************************/
-void CopySetupReqPkg(__code uint8_t *pReqPkt)                // 复制控制传输的请求包
+void CopySetupReqPkg(__code uint8_t *pReqPkt)                // Copy control transfer request packet
 {
     uint8_t   i;
-    if (HubLowSpeed) {                                       // HUB下低速设备
-        ((__xdata uint8_t *)pSetupReq)[0] = *pReqPkt;
-        for (i = 1; i != sizeof(USB_SETUP_REQ) + 1; i ++) {
-            ((__xdata uint8_t *)pSetupReq)[i] = *pReqPkt;
-            pReqPkt++;
-        }
+    if (HubLowSpeed) {                                       // Low-speed equipment under HUB
+       ((__xdata uint8_t *)pSetupReq)[0] = *pReqPkt;
+       for (i = 1; i != sizeof(USB_SETUP_REQ) + 1; i ++) {
+           ((__xdata uint8_t *)pSetupReq)[i] = *pReqPkt;
+           pReqPkt++;
+       }
     }
     if (HubLowSpeed == 0) {
-        for (i = 0; i != sizeof(USB_SETUP_REQ); i++) {
-            ((__xdata uint8_t *)pSetupReq)[i] = *pReqPkt;
-            pReqPkt++;
-        }
+       for (i = 0; i != sizeof(USB_SETUP_REQ); i++) {
+           ((__xdata uint8_t *)pSetupReq)[i] = *pReqPkt;
+           pReqPkt++;
+       }
     }
 }
 
 
 /*******************************************************************************
 * Function Name  : CtrlGetDeviceDescr
-* Description    : 获取设备描述符,返回在TxBuffer中
+* Description    : Get the device descriptor and return it in TxBuffer
 * Input          : None
 * Output         : None
-* Return         : ERR_USB_BUF_OVER 描述符长度错误
-                   ERR_SUCCESS      成功
-                   其他
+* Return         : ERR_USB_BUF_OVER descriptor length error
+                   ERR_SUCCESS Success
+                   other
 *******************************************************************************/
 uint8_t CtrlGetDeviceDescr(void) {
     uint8_t  s;
     uint8_t  len;
     UsbDevEndp0Size = DEFAULT_ENDP0_SIZE;
     CopySetupReqPkg(SetupGetDevDescr);
-    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len); // 执行控制传输
+    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len); // Execute control transfer
     if (s != ERR_SUCCESS) {
         return (s);
     }
-    UsbDevEndp0Size = ((PXUSB_DEV_DESCR)Com_Buffer) -> bMaxPacketSize0; // 端点0最大包长度,这是简化处理,正常应该先获取前8字节后立即更新UsbDevEndp0Size再继续
+    // The maximum packet length of endpoint 0. This is a simplified process.
+    // Normally, you should first obtain the first 8 bytes and then update UsbDevEndp0Size immediately before continuing.
+    UsbDevEndp0Size = ((PXUSB_DEV_DESCR)Com_Buffer) -> bMaxPacketSize0;
     if (len < ((PUSB_SETUP_REQ)SetupGetDevDescr) -> wLengthL) {
-        return (ERR_USB_BUF_OVER); // 描述符长度错误
+        return (ERR_USB_BUF_OVER); // Descriptor length error
     }
     return (ERR_SUCCESS);
 }
@@ -476,39 +482,39 @@ uint8_t CtrlGetDeviceDescr(void) {
 
 /*******************************************************************************
 * Function Name  : CtrlGetConfigDescr
-* Description    : 获取配置描述符,返回在TxBuffer中
+* Description    : Get the configuration descriptor and return it in TxBuffer
 * Input          : None
 * Output         : None
-* Return         : ERR_USB_BUF_OVER 描述符长度错误
-                   ERR_SUCCESS      成功
-                   其他
+* Return         : ERR_USB_BUF_OVER Descriptor length error
+                   ERR_SUCCESS Success
+                   other
 *******************************************************************************/
 uint8_t CtrlGetConfigDescr(void)
 {
     uint8_t s, len;
     CopySetupReqPkg(SetupGetCfgDescr);
-    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len); // 执行控制传输
+    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len); // Execute control transfer
     if (s != ERR_SUCCESS) {
-        return (s);
+        return(s);
     }
 
     len = ((PXUSB_CFG_DESCR)Com_Buffer) -> wTotalLengthL;
     CopySetupReqPkg(SetupGetCfgDescr);
-    if (HubLowSpeed) { // HUB下低速设备
-        pSetupReq -> wLengthH = len; // 完整配置描述符的总长度
+    if (HubLowSpeed) { // Low speed device under HUB
+        pSetupReq -> wLengthH = len; // The total length of the complete configuration descriptor
     }
     if (HubLowSpeed == 0) {
-        pSetupReq -> wLengthL = len; // 完整配置描述符的总长度
+        pSetupReq -> wLengthL = len; // The total length of the complete configuration descriptor
     }
-    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len); // 执行控制传输
+    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len); // Execute control transfer
     if (s != ERR_SUCCESS) {
-        return (s);
+       return(s);
     }
 #ifdef DISK_BASE_BUF_LEN
     if (len > 64) {
         len = 64;
     }
-    for (s = 0; s != len; s++) { // U盘操作时，需要拷贝到TxBuffer
+    for (s = 0; s != len; s++) { // When operating on a USB flash drive, it needs to be copied to TxBuffer
         TxBuffer[s] = Com_Buffer[s];
     }
 #endif
@@ -518,71 +524,71 @@ uint8_t CtrlGetConfigDescr(void)
 
 /*******************************************************************************
 * Function Name  : CtrlSetUsbAddress
-* Description    : 设置USB设备地址
+* Description    : Set USB device address
 * Input          : uint8_t addr 设备地址
 * Output         : None
-* Return         : ERR_SUCCESS      成功
-                   其他
+* Return         : ERR_SUCCESS Success
+                   other
 *******************************************************************************/
 uint8_t CtrlSetUsbAddress(uint8_t addr)
 {
-    uint8_t   s;
+    uint8_t s;
     CopySetupReqPkg(SetupSetUsbAddr);
-    if (HubLowSpeed) {                                                               //HUB下低速设备
-        pSetupReq -> wValueH = addr;                                                // USB设备地址
+    if (HubLowSpeed) { // Low speed device under HUB
+        pSetupReq -> wValueH = addr; // USB device address
     }
     if (HubLowSpeed == 0) {
-        pSetupReq -> wValueL = addr;                                                // USB设备地址
+        pSetupReq -> wValueL = addr; // USB device address
     }
-    s = HostCtrlTransfer(NULL, NULL);                                         // 执行控制传输
+    s = HostCtrlTransfer(NULL, NULL); // Perform control transfer
     if (s != ERR_SUCCESS) {
-        return (s);
+        return(s);
     }
-    SetHostUsbAddr (addr);                                                     // 设置USB主机当前操作的USB设备地址
-    mDelaymS(10);                                                             // 等待USB设备完成操作
+    SetHostUsbAddr (addr); // Set the USB device address currently operated by the USB host
+    mDelaymS(10); // Wait for the USB device to complete the operation
     return (ERR_SUCCESS);
 }
 
 
 /*******************************************************************************
 * Function Name  : CtrlSetUsbConfig
-* Description    : 设置USB设备配置
-* Input          : uint8_t cfg       配置值
+* Description    : Set USB device configuration
+* Input          : uint8_t cfg      configuration value
 * Output         : None
-* Return         : ERR_SUCCESS      成功
-                   其他
+* Return         : ERR_SUCCESS Success
+                   other
 *******************************************************************************/
 uint8_t CtrlSetUsbConfig(uint8_t cfg)
 {
     CopySetupReqPkg(SetupSetUsbConfig);
-    if (HubLowSpeed) {                                                               //HUB下低速设备
-        pSetupReq -> wValueH = cfg;                                                // USB设备配置
+    if (HubLowSpeed) { // Low speed device under HUB
+        pSetupReq -> wValueH = cfg; // USB device configuration
     }
     if (HubLowSpeed == 0) {
-        pSetupReq -> wValueL = cfg;                                                // USB设备配置
+        pSetupReq -> wValueL = cfg; // USB device configuration
     }
-    return (HostCtrlTransfer(NULL, NULL));                                  // 执行控制传输
+    return (HostCtrlTransfer(NULL, NULL)); // Perform control transfer
 }
 
 
 /*******************************************************************************
 * Function Name  : CtrlClearEndpStall
-* Description    : 清除端点STALL
-* Input          : uint8_t endp       端点地址
+* Description    : Clear endpoint STALL
+* Input          : uint8_t endp       endpoint address
 * Output         : None
-* Return         : ERR_SUCCESS      成功
-                   其他
+* Return         : ERR_SUCCESS Success
+                   other
 *******************************************************************************/
 uint8_t CtrlClearEndpStall(uint8_t endp)
 {
-    CopySetupReqPkg(SetupClrEndpStall);                                      // 清除端点的错误
-    if (HubLowSpeed) {                                                               //HUB下低速设备
-        pSetupReq -> wIndexH = endp;                                               // 端点地址
+    CopySetupReqPkg(SetupClrEndpStall); // Clear endpoint errors
+    if (HubLowSpeed) { // Low speed device under HUB
+        pSetupReq -> wIndexH = endp; // Endpoint address
     }
     if (HubLowSpeed == 0) {
-        pSetupReq -> wIndexL = endp;                                               // 端点地址
+        pSetupReq -> wIndexL = endp; // Endpoint address
     }
-    return (HostCtrlTransfer(NULL, NULL));                                  // 执行控制传输
+    return (HostCtrlTransfer(NULL, NULL)); // Perform control transfer
 }
 
 #ifndef DISK_BASE_BUF_LEN
@@ -590,32 +596,32 @@ uint8_t CtrlClearEndpStall(uint8_t endp)
 
 /*******************************************************************************
 * Function Name  : CtrlSetUsbIntercace
-* Description    : 设置USB设备接口
-* Input          : uint8_t cfg       配置值
+* Description    : Set USB device interface
+* Input          : uint8_t cfg       configuration value
 * Output         : None
-* Return         : ERR_SUCCESS      成功
-                   其他
+* Return         : ERR_SUCCESS Success
+                   other
 *******************************************************************************/
 uint8_t CtrlSetUsbIntercace(uint8_t cfg)
 {
     CopySetupReqPkg(SetupSetUsbInterface);
-    if (HubLowSpeed) {                                                              //HUB下低速设备
-        pSetupReq -> wValueH = cfg;                                                 // USB设备配置
+    if (HubLowSpeed) { // Low speed device under HUB
+        pSetupReq -> wValueH = cfg; // USB device configuration
     }
     if (HubLowSpeed == 0) {
-        pSetupReq -> wValueL = cfg;                                                 // USB设备配置
+        pSetupReq -> wValueL = cfg; // USB device configuration
     }
-    return (HostCtrlTransfer(NULL, NULL));                             // 执行控制传输
+    return (HostCtrlTransfer(NULL, NULL)); // Perform control transfer
 }
 
 
 /*******************************************************************************
 * Function Name  : CtrlGetHIDDeviceReport
-* Description    : 获取HID设备报表描述符,返回在TxBuffer中
+* Description    : Get the HID device report descriptor and return it in TxBuffer
 * Input          : None
 * Output         : None
-* Return         : ERR_SUCCESS 成功
-                   其他        错误
+* Return         : ERR_SUCCESS Success
+                   Other errors
 *******************************************************************************/
 uint8_t CtrlGetHIDDeviceReport(uint8_t infc)
 {
@@ -623,23 +629,23 @@ uint8_t CtrlGetHIDDeviceReport(uint8_t infc)
     uint8_t len;
 
     CopySetupReqPkg(SetupSetHIDIdle);
-    if (HubLowSpeed) {                                                               // HUB下低速设备
+    if (HubLowSpeed) { // Low speed device under HUB
         TxBuffer[5] = infc;
     } else {
         TxBuffer[4] = infc;
     }
-    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len);                                // 执行控制传输
+    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len); // Execute control transfer
     if (s != ERR_SUCCESS) {
-        return (s);
+        return(s);
     }
 
     CopySetupReqPkg(SetupGetHIDDevReport);
-    if (HubLowSpeed) {                                                              // HUB下低速设备
+    if (HubLowSpeed) { // Low speed device under HUB
         TxBuffer[5] = infc;
     } else {
         TxBuffer[4] = infc;
     }
-    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len);                                    // 执行控制传输
+    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len); // Execute control transfer
     if (s != ERR_SUCCESS) {
         return (s);
     }
@@ -650,23 +656,23 @@ uint8_t CtrlGetHIDDeviceReport(uint8_t infc)
 
 /*******************************************************************************
 * Function Name  : CtrlGetHubDescr
-* Description    : 获取HUB描述符,返回在TxBuffer中
+* Description    : Get the HUB descriptor and return it in TxBuffer
 * Input          : None
 * Output         : None
-* Return         : ERR_SUCCESS 成功
-                   ERR_USB_BUF_OVER 长度错误
+* Return         : ERR_SUCCESS Success
+                   ERR_USB_BUF_OVER length error
 *******************************************************************************/
 uint8_t CtrlGetHubDescr(void)
 {
-    uint8_t  s;
-    uint8_t  len;
+    uint8_t s;
+    uint8_t len;
     CopySetupReqPkg(SetupGetHubDescr);
-    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len);                     // 执行控制传输
+    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len);                     // Execute control transfer
     if (s != ERR_SUCCESS) {
         return (s);
     }
     if (len < ((PUSB_SETUP_REQ)SetupGetHubDescr) -> wLengthL) {
-        return (ERR_USB_BUF_OVER);                                            // 描述符长度错误
+        return (ERR_USB_BUF_OVER);                                            // Descriptor length error
     }
     return (ERR_SUCCESS);
 }
@@ -674,11 +680,11 @@ uint8_t CtrlGetHubDescr(void)
 
 /*******************************************************************************
 * Function Name  : HubGetPortStatus
-* Description    : 查询HUB端口状态,返回在TxBuffer中
+* Description    : Query the HUB port status and return it in TxBuffer
 * Input          : uint8_t HubPortIndex
 * Output         : None
-* Return         : ERR_SUCCESS 成功
-                   ERR_USB_BUF_OVER 长度错误
+* Return         : ERR_SUCCESS Success
+                   ERR_USB_BUF_OVER length error
 *******************************************************************************/
 uint8_t HubGetPortStatus(uint8_t HubPortIndex)
 {
@@ -692,12 +698,12 @@ uint8_t HubGetPortStatus(uint8_t HubPortIndex)
     pSetupReq -> wIndexH = 0x00;
     pSetupReq -> wLengthL = 0x04;
     pSetupReq -> wLengthH = 0x00;
-    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len);                         // 执行控制传输
+    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len);                         // Execute control transfer
     if (s != ERR_SUCCESS) {
         return (s);
     }
     if (len < 4) {
-        return (ERR_USB_BUF_OVER);                                            // 描述符长度错误
+        return (ERR_USB_BUF_OVER);                                            // Descriptor length error
     }
     return (ERR_SUCCESS);
 }
@@ -705,12 +711,12 @@ uint8_t HubGetPortStatus(uint8_t HubPortIndex)
 
 /*******************************************************************************
 * Function Name  : HubSetPortFeature
-* Description    : 设置HUB端口特性
-* Input          : uint8_t HubPortIndex    //HUB端口
-                   uint8_t FeatureSelt     //HUB端口特性
+* Description    : Set HUB port characteristics
+* Input          : uint8_t HubPortIndex //HUB port
+                   uint8_t FeatureSelt //HUB port characteristics
 * Output         : None
-* Return         : ERR_SUCCESS 成功
-                   其他        错误
+* Return         : ERR_SUCCESS successful
+                   Other errors
 *******************************************************************************/
 uint8_t HubSetPortFeature(uint8_t HubPortIndex, uint8_t FeatureSelt)
 {
@@ -722,18 +728,18 @@ uint8_t HubSetPortFeature(uint8_t HubPortIndex, uint8_t FeatureSelt)
     pSetupReq -> wIndexH = 0x00;
     pSetupReq -> wLengthL = 0x00;
     pSetupReq -> wLengthH = 0x00;
-    return (HostCtrlTransfer(NULL, NULL));                                 // 执行控制传输
+    return (HostCtrlTransfer(NULL, NULL));                                 // Execute control transfer
 }
 
 
 /*******************************************************************************
 * Function Name  : HubClearPortFeature
-* Description    : 清除HUB端口特性
-* Input          : uint8_t HubPortIndex                                         //HUB端口
-                   uint8_t FeatureSelt                                          //HUB端口特性
+* Description    : Clear HUB port characteristics
+* Input          : uint8_t HubPortIndex // HUB port
+                   uint8_t FeatureSelt // HUB port characteristics
 * Output         : None
-* Return         : ERR_SUCCESS 成功
-                   其他        错误
+* Return         : ERR_SUCCESS successful
+                   Other errors
 *******************************************************************************/
 uint8_t HubClearPortFeature(uint8_t HubPortIndex, uint8_t FeatureSelt)
 {
@@ -745,25 +751,25 @@ uint8_t HubClearPortFeature(uint8_t HubPortIndex, uint8_t FeatureSelt)
     pSetupReq -> wIndexH = 0x00;
     pSetupReq -> wLengthL = 0x00;
     pSetupReq -> wLengthH = 0x00;
-    return (HostCtrlTransfer(NULL, NULL));                                // 执行控制传输
+    return (HostCtrlTransfer(NULL, NULL));                                // Execute control transfer
 }
 
 
 /*******************************************************************************
 * Function Name  : CtrlGetXPrinterReport1
-* Description    : 打印机类命令
+* Description    : Printer class commands
 * Input          : None
 * Output         : None
-* Return         : ERR_USB_BUF_OVER 描述符长度错误
-                   ERR_SUCCESS      成功
-                   其他
+* Return         : ERR_USB_BUF_OVER Descriptor length error
+                   ERR_SUCCESS Success
+                   other
 *******************************************************************************/
 uint8_t CtrlGetXPrinterReport1(void)
 {
     uint8_t  s;
     uint16_t len;
     CopySetupReqPkg(XPrinterReport);
-    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len);                         // 执行控制传输
+    s = HostCtrlTransfer(Com_Buffer, (uint8_t *)&len);                         // Execute control transfer
     if (s != ERR_SUCCESS) {
         return (s);
     }
@@ -773,10 +779,13 @@ uint8_t CtrlGetXPrinterReport1(void)
 
 /*******************************************************************************
 * Function Name  : AnalyzeHidIntEndp
-* Description    : 从描述符中分析出HID中断端点的地址,如果HubPortIndex是0保存到ROOTHUB，如果是非零值则保存到HUB下结构体
-* Input          : P__xdata uint8_t buf ： 待分析数据缓冲区地址 HubPortIndex：0表示根HUB，非0表示外部HUB下的端口号
+* Description    : Analyze the address of the HID interrupt endpoint from the descriptor.
+*                  If HubPortIndex is 0, save it to ROOTHUB.
+*                  If it is a non-zero value, save it to the structure under HUB.
+* Input          : P__xdata uint8_t buf: The address of the data buffer to be analyzed
+*                  HubPortIndex: 0 represents the root HUB, non-0 represents the port number under the external HUB
 * Output         : None
-* Return         : 端点数
+* Return         : Number of endpoints
 *******************************************************************************/
 uint8_t AnalyzeHidIntEndp(__xdata uint8_t *buf, uint8_t HubPortIndex)
 {
@@ -784,20 +793,21 @@ uint8_t AnalyzeHidIntEndp(__xdata uint8_t *buf, uint8_t HubPortIndex)
     s = 0;
 
     if (HubPortIndex) {
-        memset(DevOnHubPort[HubPortIndex-1].GpVar, 0, sizeof(DevOnHubPort[HubPortIndex-1].GpVar)); // 清空数组
+        memset(DevOnHubPort[HubPortIndex-1].GpVar, 0, sizeof(DevOnHubPort[HubPortIndex-1].GpVar)); // Clear the array
     } else {
-        memset(ThisUsbDev.GpVar, 0, sizeof(ThisUsbDev.GpVar));                     //清空数组
+        memset(ThisUsbDev.GpVar, 0, sizeof(ThisUsbDev.GpVar)); // Clear the array
     }
 
-    for (i = 0; i < ((PXUSB_CFG_DESCR)buf) -> wTotalLengthL; i += l) {       // 搜索中断端点描述符,跳过配置描述符和接口描述符
-        if ((((PXUSB_ENDP_DESCR)(buf + i)) -> bDescriptorType == USB_DESCR_TYP_ENDP) && // 是端点描述符
-            ((((PXUSB_ENDP_DESCR)(buf + i)) -> bmAttributes & USB_ENDP_TYPE_MASK) == USB_ENDP_TYPE_INTER) &&// 是中断端点
-            ((((PXUSB_ENDP_DESCR)(buf + i)) -> bEndpointAddress & USB_ENDP_DIR_MASK))) { // 是IN端点
-            // 保存中断端点的地址,位7用于同步标志位,清0
+    // Search for interrupt endpoint descriptor, skip configuration descriptor and interface descriptor
+    for (i = 0; i < ((PXUSB_CFG_DESCR)buf) -> wTotalLengthL; i += l) {
+        if ((((PXUSB_ENDP_DESCR)(buf + i)) -> bDescriptorType == USB_DESCR_TYP_ENDP) && // is the endpoint descriptor
+            ((((PXUSB_ENDP_DESCR)(buf + i)) -> bmAttributes & USB_ENDP_TYPE_MASK) == USB_ENDP_TYPE_INTER) && // is the interrupt endpoint
+            ((((PXUSB_ENDP_DESCR)(buf + i)) -> bEndpointAddress & USB_ENDP_DIR_MASK))) { // is the IN endpoint
+            // Save the address of the interrupt endpoint, bit 7 is used for synchronization flag bit, clear to 0
             if (HubPortIndex) {
                 DevOnHubPort[HubPortIndex - 1].GpVar[s] = ((PXUSB_ENDP_DESCR)(buf + i)) -> bEndpointAddress & USB_ENDP_ADDR_MASK;
             } else {
-                // 中断端点的地址，可以根据需要保存wMaxPacketSize和bInterval
+                // The address of the interrupt endpoint, you can save wMaxPacketSize and bInterval as needed
                 ThisUsbDev.GpVar[s] = ((PXUSB_ENDP_DESCR)(buf + i)) -> bEndpointAddress & USB_ENDP_ADDR_MASK;
             }
 #if DE_PRINTF
@@ -805,11 +815,11 @@ uint8_t AnalyzeHidIntEndp(__xdata uint8_t *buf, uint8_t HubPortIndex)
 #endif
             s++;
             if (s >= 4) {
-                break;    //只分析4个端点
+                break; // Only analyze 4 endpoints
             }
 
         }
-        l = ((PXUSB_ENDP_DESCR)(buf + i)) -> bLength;                          // 当前描述符长度,跳过
+        l = ((PXUSB_ENDP_DESCR)(buf + i)) -> bLength; // Current descriptor length, skip
         if (l > 16) {
             break;
         }
@@ -1630,29 +1640,29 @@ uint8_t InitRootDevice(void)                                                    
 #endif
 
 
-/*******************************************************************************
+/************************************************************************************
 * Function Name  : InitUSB_Host
-* Description    : 初始化USB主机
+* Description    : Initialize USB host
 * Input          : None
 * Output         : None
 * Return         : None
-*******************************************************************************/
+**********************************************************************************/
 void InitUSB_Host(void)
 {
-    uint8_t   i;
+    uint8_t i;
     IE_USB = 0;
-    USB_CTRL = bUC_HOST_MODE;                                                    // 先设定模式
-    UHOST_CTRL &= ~bUH_PD_DIS;                                                   //启用主机下拉
+    USB_CTRL = bUC_HOST_MODE; // Set the mode first
+    UHOST_CTRL &= ~bUH_PD_DIS; // Enable host drop-down
     USB_DEV_AD = 0x00;
-    UH_EP_MOD = bUH_EP_TX_EN | bUH_EP_RX_EN ;
+    UH_EP_MOD = bUH_EP_TX_EN | bUH_EP_RX_EN;
     UH_RX_DMA = (uint16_t)RxBuffer;
     UH_TX_DMA = (uint16_t)TxBuffer;
     UH_RX_CTRL = 0x00;
     UH_TX_CTRL = 0x00;
-    USB_CTRL = bUC_HOST_MODE | bUC_INT_BUSY; // 启动USB主机及DMA,在中断标志未清除前自动暂停
-    USB_INT_FG = 0xFF;                                                          // 清中断标志
+    USB_CTRL = bUC_HOST_MODE | bUC_INT_BUSY; // Start the USB host and DMA, and automatically pause before the interrupt flag is cleared
+    USB_INT_FG = 0xFF; // Clear interrupt flag
     for (i = 0; i != 2; i++) {
-        DisableRootHubPort();                                                   // 清空
+        DisableRootHubPort(); // Clear
     }
     USB_INT_EN = bUIE_TRANSFER | bUIE_DETECT;
 }
