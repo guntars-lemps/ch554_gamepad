@@ -102,16 +102,16 @@ void main()
             len = (uint8_t)loc;
             SelectHubPort(len); // Select the ROOT-HUB port specified for operation, set the current USB speed and the USB address of the operated device
             endp = len ? DevOnHubPort[len-1].GpVar[0] : ThisUsbDev.GpVar[0]; // Address of the interrupt endpoint, bit 7 is used for the synchronization flag
-            if (endp & USB_ENDP_ADDR_MASK) { // 端点有效
-                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0); // CH554传输事务,获取数据,NAK不重试
+            if (endp & USB_ENDP_ADDR_MASK) { // endpoint valid
+                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0); // CH554 transmits transactions, obtains data, NAK does not retry
                 if (s == ERR_SUCCESS) {
-                    endp ^= 0x80; // 同步标志翻转
+                    endp ^= 0x80; // Sync flag flip
                     if (len) {
-                        DevOnHubPort[len-1].GpVar[0] = endp; // 保存同步标志位
+                        DevOnHubPort[len-1].GpVar[0] = endp; // Save sync flag bit
                     } else {
                     	ThisUsbDev.GpVar[0] = endp;
                     }
-                    len = USB_RX_LEN; // 接收到的数据长度
+                    len = USB_RX_LEN; // Received data length
                     if (len) {
                         printf("Mouse data: ");
                         for (i = 0; i < len; i ++ ) {
@@ -120,34 +120,34 @@ void main()
                         printf("\n");
                     }
                 } else if (s != (USB_PID_NAK | ERR_USB_TRANSFER)) {
-                    printf("Mouse error %02x\n", (uint16_t)s); // 可能是断开了
+                    printf("Mouse error %02x\n", (uint16_t)s); // Maybe it's disconnected
                 }
             } else {
                 printf("Mouse no interrupt endpoint\n");
             }
-            SetUsbSpeed(1); // 默认为全速
+            SetUsbSpeed(1); // Default is full speed
         }
 
 
-        /* 如果设备是键盘 */
-        loc = SearchTypeDevice(DEV_TYPE_KEYBOARD); // 在ROOT-HUB以及外部HUB各端口上搜索指定类型的设备所在的端口号
-        if (loc != 0xFFFF) { // 找到了,如果有两个KeyBoard如何处理?
+        /* If the device is a keyboard */
+        loc = SearchTypeDevice(DEV_TYPE_KEYBOARD); // Search the port number of the specified type of device on each port of ROOT-HUB and external HUB
+        if (loc != 0xFFFF) { // Found it, what to do if there are two KeyBoards?
             printf("Query Keyboard @%04X\n", loc);
             i = (uint8_t)(loc >> 8);
             len = (uint8_t)loc;
-            SelectHubPort(len); // 选择操作指定的ROOT-HUB端口,设置当前USB速度以及被操作设备的USB地址
-            endp = len ? DevOnHubPort[len-1].GpVar[0] : ThisUsbDev.GpVar[0]; // 中断端点的地址,位7用于同步标志位
+            SelectHubPort(len); // Select the ROOT-HUB port specified for operation, set the current USB speed and the USB address of the operated device
+            endp = len ? DevOnHubPort[len-1].GpVar[0] : ThisUsbDev.GpVar[0]; // Address of the interrupt endpoint, bit 7 is used for the synchronization flag
             printf("%02X  ",endp);
-            if (endp & USB_ENDP_ADDR_MASK) { // 端点有效
+            if (endp & USB_ENDP_ADDR_MASK) { // endpoint valid
                 s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0); // CH554传输事务,获取数据,NAK不重试
                 if (s == ERR_SUCCESS) {
-                    endp ^= 0x80; // 同步标志翻转
+                    endp ^= 0x80; // Sync flag flip
                     if (len) {
-                        DevOnHubPort[len-1].GpVar[0] = endp; // 保存同步标志位
+                        DevOnHubPort[len-1].GpVar[0] = endp; // Save sync flag bit
                     } else {
                     	ThisUsbDev.GpVar[0] = endp;
                     }
-                    len = USB_RX_LEN; // 接收到的数据长度
+                    len = USB_RX_LEN; // Received data length
                     if (len) {
                         SETorOFFNumLock(RxBuffer);
                         printf("keyboard data: ");
@@ -157,16 +157,16 @@ void main()
                         printf("\n");
                     }
                 } else if (s != (USB_PID_NAK | ERR_USB_TRANSFER)) {
-                    printf("keyboard error %02x\n", (uint16_t)s); // 可能是断开了
+                    printf("keyboard error %02x\n", (uint16_t)s); // Maybe it's disconnected
                 }
             } else {
                 printf("keyboard no interrupt endpoint\n");
             }
-            SetUsbSpeed(1); // 默认为全速
+            SetUsbSpeed(1); // Default is full speed
         }
 
-        /* 操作USB打印机 */
-        if (TIN0 == 0) { // P10为低，开始打印
+        /* Operating a USB printer */
+        if (TIN0 == 0) { // P10 is low, start printing
             memset(TxBuffer, 0, sizeof(TxBuffer));
 
             uint8_t tx[14] = {0x1B, 0x40, 0x1D, 0x55, 0x42, 0x02, 0x18, 0x1D, 0x76, 0x30, 0x00, 0x30, 0x00, 0x18};
@@ -175,55 +175,55 @@ void main()
             	TxBuffer[i] = tx[i];
             }
 
-            loc = SearchTypeDevice(USB_DEV_CLASS_PRINTER); // 在ROOT-HUB以及外部HUB各端口上搜索指定类型的设备所在的端口号
-            if (loc != 0xFFFF) { // 找到了,如果有两个打印机如何处理?
+            loc = SearchTypeDevice(USB_DEV_CLASS_PRINTER); // Search the port number of the specified type of device on each port of ROOT-HUB and external HUB
+            if (loc != 0xFFFF) { // Found it, what to do if there are two printers?
                 printf( "Query Printer @%04X\n", loc);
                 i = (uint8_t)(loc >> 8);
                 len = (uint8_t)loc;
-                SelectHubPort(len); // 选择操作指定的ROOT-HUB端口,设置当前USB速度以及被操作设备的USB地址
-                endp = len ? DevOnHubPort[len-1].GpVar[0] : ThisUsbDev.GpVar[0]; // 端点的地址,位7用于同步标志位
+                SelectHubPort(len); // Select the ROOT-HUB port specified for operation, set the current USB speed and the USB address of the operated device
+                endp = len ? DevOnHubPort[len-1].GpVar[0] : ThisUsbDev.GpVar[0]; // The address of the endpoint, bit 7 is used for the synchronization flag
                 printf("%02X  ", endp);
-                if (endp & USB_ENDP_ADDR_MASK) { // 端点有效
-                    UH_TX_LEN = 64; // 默认无数据故状态阶段为IN
-                    // CH554传输事务,获取数据,NAK重试
+                if (endp & USB_ENDP_ADDR_MASK) { // endpoint valid
+                    UH_TX_LEN = 64; // By default, there is no data, so the status stage is IN.
+                    // CH554 transmit transaction, obtain data, NAK retry
                     s = USBHostTransact(((USB_PID_OUT << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0xffff);
                     if (s == ERR_SUCCESS) {
-                        endp ^= 0x80; // 同步标志翻转
+                        endp ^= 0x80; // Sync flag flip
                         memset(TxBuffer, 0, sizeof(TxBuffer));
-                        UH_TX_LEN = 64; // 默认无数据故状态阶段为IN
-                        // CH554传输事务,获取数据,NAK重试
+                        UH_TX_LEN = 64; // By default, there is no data, so the status stage is IN.
+                        // CH554 transmit transaction, obtain data, NAK retry
                         s = USBHostTransact(((USB_PID_OUT << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0xffff);
                     } else if (s != (USB_PID_NAK | ERR_USB_TRANSFER)) {
-                        printf("Printer error %02x\n",(uint16_t)s); // 可能是断开了
+                        printf("Printer error %02x\n",(uint16_t)s); // Maybe it's disconnected
                     }
                 }
             }
         }
 
-        /* 操作HID复合设备 */
-        loc = SearchTypeDevice(USB_DEV_CLASS_HID); // 在ROOT-HUB以及外部HUB各端口上搜索指定类型的设备所在的端口号
-        if (loc != 0xFFFF) { // 找到了
+        /* Operating HID composite equipment */
+        loc = SearchTypeDevice(USB_DEV_CLASS_HID); // Search the port number of the specified type of device on each port of ROOT-HUB and external HUB
+        if (loc != 0xFFFF) { // found it
             printf("Query USB_DEV_CLASS_HID @%04X\n", loc);
-            loc = (uint8_t)loc; //554只有一个USB，只需低八位即可
+            loc = (uint8_t)loc; // 554 has only one USB, only the lower eight bits are needed
 
             for (k = 0; k != 4; k++) {
-                // 端点是否有效？
-                endp = loc ? DevOnHubPort[loc-1].GpVar[k] : ThisUsbDev.GpVar[k]; // 中断端点的地址,位7用于同步标志位
+                // Is the endpoint valid ?
+                endp = loc ? DevOnHubPort[loc-1].GpVar[k] : ThisUsbDev.GpVar[k]; // Address of the interrupt endpoint, bit 7 is used for the synchronization flag
                 if ((endp & USB_ENDP_ADDR_MASK) == 0) {
                 	break;
                 }
 
                 printf("endp: %02X\n", (uint16_t)endp);
-                SelectHubPort(loc); // 选择操作指定的ROOT-HUB端口,设置当前USB速度以及被操作设备的USB地址
-                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0); // CH554传输事务,获取数据,NAK不重试
+                SelectHubPort(loc); // Select the ROOT-HUB port specified for operation, set the current USB speed and the USB address of the operated device
+                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0); // CH554 transmits transactions, obtains data, NAK does not retry
                 if (s == ERR_SUCCESS) {
-                    endp ^= 0x80; // 同步标志翻转
+                    endp ^= 0x80; // Sync flag flip
                     if (loc) {
-                        DevOnHubPort[loc-1].GpVar[k] = endp; // 保存同步标志位
+                        DevOnHubPort[loc-1].GpVar[k] = endp; // Save sync flag bit
                     } else {
                     	ThisUsbDev.GpVar[k] = endp;
                     }
-                    len = USB_RX_LEN; // 接收到的数据长度
+                    len = USB_RX_LEN; // Received data length
                     if (len) {
                         printf("keyboard data: ");
                         for (i = 0; i < len; i ++ ) {
@@ -232,47 +232,47 @@ void main()
                         printf("\n");
                     }
                 } else if (s != (USB_PID_NAK | ERR_USB_TRANSFER)) {
-                    printf("keyboard error %02x\n", (uint16_t)s); // 可能是断开了
+                    printf("keyboard error %02x\n", (uint16_t)s); // Maybe it's disconnected
                 }
             }
-            SetUsbSpeed(1); // 默认为全速
+            SetUsbSpeed(1); // Default is full speed
         }
 
 
-        /* 操作厂商设备，可能是手机，会先尝试以AOA方式启动 */
-        loc = SearchTypeDevice(DEF_AOA_DEVICE); // 查找AOA
-        if (loc != 0xFFF ) { // 找到了
-            loc = (uint8_t)loc; // 目前USBHOST.C仅支持ROOTHUB下的Android操作,不用分析loc
+        /* When operating the manufacturer's device, possibly a mobile phone, it will first try to start in AOA mode. */
+        loc = SearchTypeDevice(DEF_AOA_DEVICE); // Find AOA
+        if (loc != 0xFFF ) { // found it
+            loc = (uint8_t)loc; // Currently USBHOST.C only supports Android operations under ROOTHUB, and there is no need to analyze loc
 
-            endp = ThisUsbDev.GpVar[0]; // 准备对上传端点发IN包
-            if ((endp & USB_ENDP_ADDR_MASK) != 0) { //端点有效
-                SelectHubPort(0); // 选择操作指定的ROOT-HUB端口,设置当前USB速度以及被操作设备的USB地址
-                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0 ); // CH554传输事务,获取数据,NAK不重试
+            endp = ThisUsbDev.GpVar[0]; // Prepare to send IN packet to upload endpoint
+            if ((endp & USB_ENDP_ADDR_MASK) != 0) { // endpoint valid
+                SelectHubPort(0); // Select the ROOT-HUB port specified for operation, set the current USB speed and the USB address of the operated device
+                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0 ); // CH554 transmits transactions, obtains data, NAK does not retry
                 if (s == ERR_SUCCESS) {
-                    endp ^= 0x80; // 同步标志翻转
-                    ThisUsbDev.GpVar[0] = endp; // 保存同步标志位
-                    len = USB_RX_LEN; // 接收到的数据长度
+                    endp ^= 0x80; // Sync flag flip
+                    ThisUsbDev.GpVar[0] = endp; // Save sync flag bit
+                    len = USB_RX_LEN; // Received data length
 
                     for (i = 0; i < len; i++) {
                         printf("x%02X ", (uint16_t)(RxBuffer[i]));
                     }
                     printf("\n");
                     if (len) {
-                        memcpy(TxBuffer, RxBuffer, len); // 回传
-                        endp = ThisUsbDev.GpVar[2]; // 下传端点发OUT包
+                        memcpy(TxBuffer, RxBuffer, len); // return
+                        endp = ThisUsbDev.GpVar[2]; // The download endpoint sends OUT packets
                         UH_TX_LEN = len;
-                        s = USBHostTransact(((USB_PID_OUT << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0xffff); // 无限次重试下传
+                        s = USBHostTransact(((USB_PID_OUT << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0xffff); // Unlimited retries for downloading
                         if (s == ERR_SUCCESS) {
-                            endp ^= 0x80; // 同步标志翻转
-                            ThisUsbDev.GpVar[2] = endp; // 保存同步标志位
+                            endp ^= 0x80; // Sync flag flip
+                            ThisUsbDev.GpVar[2] = endp; // Save sync flag bit
                             printf("send back\n");
                         }
                     }
                 } else if (s != (USB_PID_NAK | ERR_USB_TRANSFER)) {
-                    printf("transmit error %02x\n", (uint16_t)s); // 可能是断开了
+                    printf("transmit error %02x\n", (uint16_t)s); // Maybe it's disconnected
                 }
             }
-            SetUsbSpeed(1); // 默认为全速
+            SetUsbSpeed(1); // Default is full speed
         }
 
     } // end of while (1) loop

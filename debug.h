@@ -163,13 +163,11 @@ inline void CH554WDTModeSelect(uint8_t mode)
     SAFE_MOD = 0xaa; // Enter Safe Mode
     if (mode) {
         GLOBAL_CFG |= bWDOG_EN; // Start watchdog reset
+    } else {
+        GLOBAL_CFG &= ~bWDOG_EN; //Start watchdog only as a timer
     }
-
-   else {
-      GLOBAL_CFG &= ~bWDOG_EN; //Start watchdog only as a timer
-   }
-   SAFE_MOD = 0; // exit safe Mode
-   WDOG_COUNT = 0; // Watchdog assignment initial value
+    SAFE_MOD = 0; // exit safe Mode
+    WDOG_COUNT = 0; // Watchdog assignment initial value
 }
 
 
@@ -185,5 +183,5 @@ inline void CH554WDTModeSelect(uint8_t mode)
 *******************************************************************************/
 inline void CH554WDTFeed(uint8_t tim)
 {
-   WDOG_COUNT = tim; // Watchdog counter assignment
+    WDOG_COUNT = tim; // Watchdog counter assignment
 }
