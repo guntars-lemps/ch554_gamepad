@@ -18,6 +18,9 @@ extern __xdata __at (0x0040) uint8_t TxBuffer[MAX_PACKET_SIZE];
 
 #include "ch554_usb.h"
 
+
+#define DE_PRINTF 1
+
 __bit HubLowSpeed;
 
 // Define a user temporary buffer, which is used to process descriptors during enumeration.
@@ -1315,7 +1318,7 @@ uint8_t InitDevOnHub(uint8_t HubPortIndex)
                 s = CtrlGetHIDDeviceReport(dv_cls); // Get the report descriptor
                 if (s == ERR_SUCCESS) {
 #if DE_PRINTF
-                    for (i = 0; i < 64; i++) {
+                    for (int i = 0; i < 64; i++) {
                         printf("x%02X ", (uint16_t)(Com_Buffer[i]));
                     }
                     printf("\n");
@@ -1325,7 +1328,7 @@ uint8_t InitDevOnHub(uint8_t HubPortIndex)
             // Endpoint information needs to be saved so that the main program can perform USB transmission
             DevOnHubPort[HubPortIndex - 1].DeviceStatus = ROOT_DEV_SUCCESS;
             if (if_cls == 1) {
-                evOnHubPort[HubPortIndex-1].DeviceType = DEV_TYPE_KEYBOARD;
+                DevOnHubPort[HubPortIndex-1].DeviceType = DEV_TYPE_KEYBOARD;
                 // Further initialization, such as device keyboard indicator LED, etc.
                 if (ifc > 1) {
 #if DE_PRINTF
@@ -1371,7 +1374,7 @@ uint8_t InitDevOnHub(uint8_t HubPortIndex)
      } else { // Other devices
         AnalyzeBulkEndp(Com_Buffer, HubPortIndex); // Analyze the batch endpoint
 #if DE_PRINTF
-        for (i = 0; i != 4; i++) {
+        for (int i = 0; i != 4; i++) {
             printf("%02x ", (uint16_t)DevOnHubPort[HubPortIndex - 1].GpVar[i]);
         }
         printf("\n");
