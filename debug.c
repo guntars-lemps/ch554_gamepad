@@ -63,13 +63,13 @@ void mDelayuS(uint16_t n)  // Delay in uS
 {
 #ifdef    FREQ_SYS
 #if        FREQ_SYS <= 6000000
-        n >>= 2;
+    n >>= 2;
 #endif
 #if        FREQ_SYS <= 3000000
-        n >>= 2;
+    n >>= 2;
 #endif
 #if        FREQ_SYS <= 750000
-        n >>= 4;
+    n >>= 4;
 #endif
 #endif
     while (n) {  // total = 12~13 Fsys cycles, 1uS @Fsys=12MHz
@@ -118,7 +118,7 @@ void mDelayuS(uint16_t n)  // Delay in uS
 * Output         : None
 * Return         : None
 *******************************************************************************/
-void mDelaymS( uint16_t n )                                                  // Delay in mS
+void mDelaymS(uint16_t n) // Delay in mS
 {
     while (n) {
 #ifdef    DELAY_MS_HW

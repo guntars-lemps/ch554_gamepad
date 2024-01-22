@@ -89,12 +89,13 @@ void main()
         }
 
         /* If the lower end of CH554 is connected to a HUB, enumerate the HUB first. */
-        s = EnumAllHubPort(); // Enumerate secondary USB devices behind external HUB under all ROOT-HUB ports
+        /*s = EnumAllHubPort(); // Enumerate secondary USB devices behind external HUB under all ROOT-HUB ports
         if (s != ERR_SUCCESS) { // Maybe the HUB is disconnected
             printf("EnumAllHubPort err = %02X\n", (uint16_t)s);
-        }
+        }*/
 
         /* If the device is a mouse */
+        /*
         loc = SearchTypeDevice(DEV_TYPE_MOUSE); // Search the port number of the specified type of device on each port of ROOT-HUB and external HUB
         if (loc != 0xFFFF) { // Found it, what to do if there are two MOUSEs ?
             printf("Query Mouse @%04X\n", loc);
@@ -114,7 +115,7 @@ void main()
                     len = USB_RX_LEN; // Received data length
                     if (len) {
                         printf("Mouse data: ");
-                        for (i = 0; i < len; i ++ ) {
+                        for (i = 0; i < len; i ++) {
                             printf("x%02X ", (uint16_t)(RxBuffer[i]));
                         }
                         printf("\n");
@@ -127,10 +128,10 @@ void main()
             }
             SetUsbSpeed(1); // Default is full speed
         }
-
+        */
 
         /* If the device is a keyboard */
-        loc = SearchTypeDevice(DEV_TYPE_KEYBOARD); // Search the port number of the specified type of device on each port of ROOT-HUB and external HUB
+        /*loc = SearchTypeDevice(DEV_TYPE_KEYBOARD); // Search the port number of the specified type of device on each port of ROOT-HUB and external HUB
         if (loc != 0xFFFF) { // Found it, what to do if there are two KeyBoards?
             printf("Query Keyboard @%04X\n", loc);
             i = (uint8_t)(loc >> 8);
@@ -139,7 +140,8 @@ void main()
             endp = len ? DevOnHubPort[len-1].GpVar[0] : ThisUsbDev.GpVar[0]; // Address of the interrupt endpoint, bit 7 is used for the synchronization flag
             printf("%02X  ",endp);
             if (endp & USB_ENDP_ADDR_MASK) { // endpoint valid
-                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0); // CH554传输事务,获取数据,NAK不重试
+                // CH554 transmits transactions, obtains data, NAK does not retry
+                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0);
                 if (s == ERR_SUCCESS) {
                     endp ^= 0x80; // Sync flag flip
                     if (len) {
@@ -164,8 +166,11 @@ void main()
             }
             SetUsbSpeed(1); // Default is full speed
         }
+        */
+
 
         /* Operating a USB printer */
+        /*
         if (TIN0 == 0) { // P10 is low, start printing
             memset(TxBuffer, 0, sizeof(TxBuffer));
 
@@ -199,6 +204,8 @@ void main()
                 }
             }
         }
+        */
+
 
         /* Operating HID composite equipment */
         loc = SearchTypeDevice(USB_DEV_CLASS_HID); // Search the port number of the specified type of device on each port of ROOT-HUB and external HUB
@@ -215,7 +222,8 @@ void main()
 
                 printf("endp: %02X\n", (uint16_t)endp);
                 SelectHubPort(loc); // Select the ROOT-HUB port specified for operation, set the current USB speed and the USB address of the operated device
-                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0); // CH554 transmits transactions, obtains data, NAK does not retry
+                // CH554 transmits transactions, obtains data, NAK does not retry
+                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0);
                 if (s == ERR_SUCCESS) {
                     endp ^= 0x80; // Sync flag flip
                     if (loc) {
@@ -240,14 +248,16 @@ void main()
 
 
         /* When operating the manufacturer's device, possibly a mobile phone, it will first try to start in AOA mode. */
+        /*
         loc = SearchTypeDevice(DEF_AOA_DEVICE); // Find AOA
-        if (loc != 0xFFF ) { // found it
+        if (loc != 0xFFF) { // found it
             loc = (uint8_t)loc; // Currently USBHOST.C only supports Android operations under ROOTHUB, and there is no need to analyze loc
 
             endp = ThisUsbDev.GpVar[0]; // Prepare to send IN packet to upload endpoint
             if ((endp & USB_ENDP_ADDR_MASK) != 0) { // endpoint valid
                 SelectHubPort(0); // Select the ROOT-HUB port specified for operation, set the current USB speed and the USB address of the operated device
-                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0 ); // CH554 transmits transactions, obtains data, NAK does not retry
+                // CH554 transmits transactions, obtains data, NAK does not retry
+                s = USBHostTransact(((USB_PID_IN << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0 );
                 if (s == ERR_SUCCESS) {
                     endp ^= 0x80; // Sync flag flip
                     ThisUsbDev.GpVar[0] = endp; // Save sync flag bit
@@ -261,7 +271,8 @@ void main()
                         memcpy(TxBuffer, RxBuffer, len); // return
                         endp = ThisUsbDev.GpVar[2]; // The download endpoint sends OUT packets
                         UH_TX_LEN = len;
-                        s = USBHostTransact(((USB_PID_OUT << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0xffff); // Unlimited retries for downloading
+                        // Unlimited retries for downloading
+                        s = USBHostTransact(((USB_PID_OUT << 4) | (endp & 0x7F)), ((endp & 0x80) ? (bUH_R_TOG | bUH_T_TOG) : 0), 0xffff);
                         if (s == ERR_SUCCESS) {
                             endp ^= 0x80; // Sync flag flip
                             ThisUsbDev.GpVar[2] = endp; // Save sync flag bit
@@ -274,6 +285,7 @@ void main()
             }
             SetUsbSpeed(1); // Default is full speed
         }
+        */
 
     } // end of while (1) loop
 

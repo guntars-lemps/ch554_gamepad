@@ -25,7 +25,7 @@ __bit HubLowSpeed;
 
 // Define a user temporary buffer, which is used to process descriptors during enumeration.
 // It can also be used as a normal temporary buffer after enumeration.
-__xdata uint8_t  Com_Buffer[COM_BUF_SIZE];
+__xdata uint8_t Com_Buffer[COM_BUF_SIZE];
 
 
 /*******************************************************************************
@@ -528,7 +528,7 @@ uint8_t CtrlGetConfigDescr(void)
 /*******************************************************************************
 * Function Name  : CtrlSetUsbAddress
 * Description    : Set USB device address
-* Input          : uint8_t addr 设备地址
+* Input          : uint8_t addr Device addressDevice address
 * Output         : None
 * Return         : ERR_SUCCESS Success
                    other
@@ -598,14 +598,14 @@ uint8_t CtrlClearEndpStall(uint8_t endp)
 
 
 /*******************************************************************************
-* Function Name  : CtrlSetUsbIntercace
+* Function Name  : CtrlSetUsbInterface
 * Description    : Set USB device interface
 * Input          : uint8_t cfg       configuration value
 * Output         : None
 * Return         : ERR_SUCCESS Success
                    other
 *******************************************************************************/
-uint8_t CtrlSetUsbIntercace(uint8_t cfg)
+uint8_t CtrlSetUsbInterface(uint8_t cfg)
 {
     CopySetupReqPkg(SetupSetUsbInterface);
     if (HubLowSpeed) { // Low speed device under HUB
@@ -767,7 +767,7 @@ uint8_t HubClearPortFeature(uint8_t HubPortIndex, uint8_t FeatureSelt)
                    ERR_SUCCESS Success
                    other
 *******************************************************************************/
-uint8_t CtrlGetXPrinterReport1(void)
+/*uint8_t CtrlGetXPrinterReport1(void)
 {
     uint8_t  s;
     uint16_t len;
@@ -778,7 +778,7 @@ uint8_t CtrlGetXPrinterReport1(void)
     }
     return (ERR_SUCCESS);
 }
-
+*/
 
 /*******************************************************************************
 * Function Name  : AnalyzeHidIntEndp
@@ -851,11 +851,11 @@ uint8_t AnalyzeBulkEndp(__xdata uint8_t *buf, uint8_t HubPortIndex)
 
     if (HubPortIndex) {
         memset(DevOnHubPort[HubPortIndex-1].GpVar, 0, sizeof(DevOnHubPort[HubPortIndex-1].GpVar)); // Clear the array
-     } else {
+    } else {
         memset(ThisUsbDev.GpVar, 0, sizeof(ThisUsbDev.GpVar)); // Clear the array
-     }
+    }
 
-     for (i = 0; i < ((PXUSB_CFG_DESCR)buf) -> wTotalLengthL; i += l) {
+    for (i = 0; i < ((PXUSB_CFG_DESCR)buf) -> wTotalLengthL; i += l) {
         // Search for interrupt endpoint descriptor, skip configuration descriptor and interface descriptor
         if ((((PXUSB_ENDP_DESCR)(buf + i)) -> bDescriptorType == USB_DESCR_TYP_ENDP) && // is the endpoint descriptor
             (((((PXUSB_ENDP_DESCR)(buf + i) ) -> bmAttributes & USB_ENDP_TYPE_MASK) == USB_ENDP_TYPE_BULK))) { // Is the interrupt endpoint
@@ -890,7 +890,7 @@ uint8_t AnalyzeBulkEndp(__xdata uint8_t *buf, uint8_t HubPortIndex)
 
 
 // Try to start AOA mode
-uint8_t TouchStartAOA(void)
+/*uint8_t TouchStartAOA(void)
 {
     uint8_t len,s,i,Num;
     uint16_t cp_len;
@@ -923,7 +923,7 @@ uint8_t TouchStartAOA(void)
     }
     return ERR_SUCCESS;
 }
-
+*/
 
 /*******************************************************************************
 * Function Name  : InitRootDevice
@@ -1019,7 +1019,8 @@ USBDevEnum:
                         SetUsbSpeed(1); // Default is full speed
                         return (ERR_SUCCESS);
                     }
-                } else if ((dv_cls == 0x00) && (if_cls == USB_DEV_CLASS_PRINTER) &&
+                } /*
+                else if ((dv_cls == 0x00) && (if_cls == USB_DEV_CLASS_PRINTER) &&
                            (((PXUSB_CFG_DESCR_LONG)Com_Buffer) -> itf_descr.bInterfaceSubClass == 0x01)) { // It is a printer device
 #if DE_PRINTF
                     printf("USB-Print OK\n");
@@ -1036,7 +1037,7 @@ USBDevEnum:
                     }
                     s = CtrlSetUsbConfig(cfg); // Set USB device configuration
                     if (s == ERR_SUCCESS) {
-                        s = CtrlSetUsbIntercace(cfg);
+                        s = CtrlSetUsbInterface(cfg);
                         s = CtrlGetXPrinterReport1(); // Printer class command
                         if (s == ERR_SUCCESS) {
                             ThisUsbDev.DeviceStatus = ROOT_DEV_SUCCESS;
@@ -1048,13 +1049,14 @@ USBDevEnum:
                             return (ERR_SUCCESS);
                         }
                     }
-                } else if ((dv_cls == 0x00) && (if_cls == USB_DEV_CLASS_HID) &&
+                }*/
+                else if ((dv_cls == 0x00) && (if_cls == USB_DEV_CLASS_HID) &&
                            (((PXUSB_CFG_DESCR_LONG)Com_Buffer) -> itf_descr.bInterfaceSubClass <= 0x01)) { // It is a HID device, keyboard/mouse, etc.
                     s = AnalyzeHidIntEndp(Com_Buffer, 0); // Analyze the address of the HID interrupt endpoint from the descriptor
 #if DE_PRINTF
                     printf("AnalyzeHidIntEndp %02x\n", (uint16_t)s);
 #endif
-                    if_cls = ((PXUSB_CFG_DESCR_LONG)Com_Buffer ) -> itf_descr.bInterfaceProtocol;
+                    if_cls = ((PXUSB_CFG_DESCR_LONG)Com_Buffer) -> itf_descr.bInterfaceProtocol;
 #if DE_PRINTF
                     printf("CtrlSetUsbConfig %02x\n", (uint16_t)cfg);
 #endif
@@ -1110,7 +1112,8 @@ USBDevEnum:
                         }
                         s = ERR_USB_UNSUPPORT;
                     }
-                 } else if (dv_cls == USB_DEV_CLASS_HUB) { // It is a HUB type device, hub, etc.
+                 } /*
+                 else if (dv_cls == USB_DEV_CLASS_HUB) { // It is a HUB type device, hub, etc.
                     s = AnalyzeHidIntEndp(Com_Buffer, 0); // Analyze the address of the HID interrupt endpoint from the descriptor
 #if DE_PRINTF
                     printf("AnalyzeHidIntEndp %02x\n", (uint16_t)s);
@@ -1154,7 +1157,8 @@ USBDevEnum:
                             return (ERR_SUCCESS);
                         }
                     }
-                } else { // Other devices
+                } */
+                else { // Other devices
 #if DE_PRINTF
                     printf("dv_cls %02x\n", (uint16_t)dv_cls);
                     printf("if_cls %02x\n", (uint16_t)if_cls);
@@ -1162,16 +1166,17 @@ USBDevEnum:
 #endif
                     AnalyzeBulkEndp(Com_Buffer, 0); // Analyze the batch endpoint
 #if DE_PRINTF
-                     for (i = 0; i != 4; i++) {
-                         printf("%02x ", (uint16_t)ThisUsbDev.GpVar[i]);
-                     }
-                     printf("\n");
+                    for (i = 0; i != 4; i++) {
+                        printf("%02x ", (uint16_t)ThisUsbDev.GpVar[i]);
+                    }
+                    printf("\n");
 #endif
-                     s = CtrlSetUsbConfig(cfg); // Set USB device configuration
-                     if (s == ERR_SUCCESS) {
+                    s = CtrlSetUsbConfig(cfg); // Set USB device configuration
+                    if (s == ERR_SUCCESS) {
 #if DE_PRINTF
                         printf("%02x %02x\n", (uint16_t)ThisUsbDev.DeviceVID, (uint16_t)ThisUsbDev.DevicePID);
 #endif
+                        /*
                         if ((ThisUsbDev.DeviceVID == 0x18D1) && ((ThisUsbDev.DevicePID & 0xff00) == 0x2D00)) { // If it is an AOA accessory
                             printf("AOA Mode\n");
                             ThisUsbDev.DeviceStatus = ROOT_DEV_SUCCESS;
@@ -1194,6 +1199,7 @@ USBDevEnum:
                                 return (ERR_SUCCESS); // Unknown device initialized successfully
                             }
                         }
+                        */
                     }
                 }
             }
@@ -1240,6 +1246,7 @@ uint8_t EnumAllRootDevice(void)
 * Return         : ERR_SUCCESS successful
                    ERR_USB_UNKNOWN unknown device
 *******************************************************************************/
+/*
 uint8_t InitDevOnHub(uint8_t HubPortIndex)
 {
     uint8_t s, cfg, dv_cls, if_cls;
@@ -1283,8 +1290,8 @@ uint8_t InitDevOnHub(uint8_t HubPortIndex)
     }
     printf("\n");
 #endif
-    /* Analyze the configuration descriptor, obtain endpoint data/each endpoint address/each endpoint size, etc.,
-       update variables endp_addr and endp_size, etc. */
+    // Analyze the configuration descriptor, obtain endpoint data/each endpoint address/each endpoint size, etc.,
+    //   update variables endp_addr and endp_size, etc.
     if_cls = ((PXUSB_CFG_DESCR_LONG)Com_Buffer) -> itf_descr.bInterfaceClass; // Interface class code
     if ((dv_cls == 0x00) && (if_cls == USB_DEV_CLASS_STORAGE)) { // It is a USB storage device, basically confirmed to be a U disk
         AnalyzeBulkEndp(Com_Buffer, HubPortIndex);
@@ -1342,7 +1349,7 @@ uint8_t InitDevOnHub(uint8_t HubPortIndex)
                 SetUsbSpeed(1); // Default is full speed
 
                 return (ERR_SUCCESS);
-             } else if (if_cls == 2) {
+            } else if (if_cls == 2) {
                 DevOnHubPort[HubPortIndex - 1].DeviceType = DEV_TYPE_MOUSE;
                 // In order to query the mouse status in the future, the descriptor should be analyzed to obtain
                 // the address, length and other information of the interrupt port.
@@ -1394,7 +1401,7 @@ uint8_t InitDevOnHub(uint8_t HubPortIndex)
     DevOnHubPort[HubPortIndex - 1].DeviceStatus = ROOT_DEV_FAILED;
     SetUsbSpeed(1); // Default is full speed
     return s;
-}
+}*/
 
 
 /*******************************************************************************
@@ -1406,7 +1413,7 @@ uint8_t InitDevOnHub(uint8_t HubPortIndex)
 * Return         : ERR_SUCCESS successful
                    Other failed
 *******************************************************************************/
-uint8_t EnumHubPort()
+/*uint8_t EnumHubPort()
 {
     uint8_t i, s;
 
@@ -1499,7 +1506,7 @@ uint8_t EnumHubPort()
     }
     return (ERR_SUCCESS); // Return operation successful
 }
-
+*/
 
 /*******************************************************************************
 * Function Name  : EnumAllHubPort
@@ -1509,7 +1516,7 @@ uint8_t EnumHubPort()
 * Return         : ERR_SUCCESS successful
                    Other failed
 *******************************************************************************/
-uint8_t EnumAllHubPort(void)
+/*uint8_t EnumAllHubPort(void)
 {
     uint8_t s;
 
@@ -1525,7 +1532,7 @@ uint8_t EnumAllHubPort(void)
         SetUsbSpeed(1); // Default is full speed
     }
     return (ERR_SUCCESS);
-}
+}*/
 
 
 /*******************************************************************************
